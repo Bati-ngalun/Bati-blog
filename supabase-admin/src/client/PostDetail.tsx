@@ -258,7 +258,9 @@ const PostDetail: React.FC = () => {
             </div>
           </div>
           <p className="mt-4 text-gray-600 text-sm">
-            Building excellence in Cameroon since day one. Our team shares insights, tips, and project updates to help you achieve your construction dreams.
+            Building excellence in The Gambia & the sub-region since day one.
+						Our team shares insights, tips, and project updates to help you
+						achieve your construction dreams.
           </p>
         </div>
       </article>

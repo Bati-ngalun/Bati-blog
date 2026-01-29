@@ -30,13 +30,13 @@ export interface Image {
   id: string;
   name: string;
   url: string;
+  path: string;       // Add this to match the DB column
   alt_text?: string;
   size?: number;
   mime_type?: string;
   folder: string;
   created_at: string;
 }
-
 export interface BlogStats {
   totalPosts: number;
   totalViews: number;

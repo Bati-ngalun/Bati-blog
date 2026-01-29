@@ -76,14 +76,16 @@ const MediaLibrary: React.FC = () => {
           .from('blog-images')
           .getPublicUrl(fileName);
 
-        const imageRecord = {
+       const imageRecord = {
           name: file.name,
+          path: fileName, // ✅ ADD THIS
           url: urlData.publicUrl,
           alt_text: file.name.replace(/\.[^/.]+$/, ''),
           size: file.size,
           mime_type: file.type,
           folder: 'general'
-        };
+      };
+
 
         const { data: insertData, error: insertError } = await supabase
           .from('images')

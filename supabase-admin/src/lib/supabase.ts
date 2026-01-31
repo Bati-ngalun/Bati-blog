@@ -1,20 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
-// Initialize database client
-const supabaseUrl = "https://ousrwhwfrwlrnheoavzk.supabase.co";
-const supabaseKey =
-	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91c3J3aHdmcndscm5oZW9hdnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3Mzk1OTUsImV4cCI6MjA4NDMxNTU5NX0.bsmClz_bzvYTyo0VjnhgOB3Z5qbA0L3WJb8dmBLgLt0";
+// Vite uses import.meta.env instead of process.env
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create client with extended properties for edge function calls
-const supabase = createClient(supabaseUrl, supabaseKey) as ReturnType<
-	typeof createClient
-> & {
-	supabaseUrl: string;
-	supabaseKey: string;
-};
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase Environment Variables');
+}
 
-// Attach URL and key for edge function calls
-(supabase as any).supabaseUrl = supabaseUrl;
-(supabase as any).supabaseKey = supabaseKey;
-
-export { supabase };
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

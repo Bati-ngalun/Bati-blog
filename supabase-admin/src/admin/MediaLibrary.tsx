@@ -46,84 +46,81 @@ const MediaLibrary: React.FC = () => {
     }
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
 
-    setUploading(true);
-    const uploadedImages: ImageType[] = [];
+  setUploading(true);
+  const uploadedImages: ImageType[] = [];
 
-    try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) {
-          toast.error(`${file.name} is not an image`);
-          continue;
-        }
+  try {
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image`);
+        continue;
+      }
 
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      // 1. Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error(`Failed to upload ${file.name}`);
+        continue;
+      }
+
+      // 2. Get the Public URL (This was missing/undefined in your code)
+      const { data: urlData } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(fileName);
+
+      // 3. Construct the record for the Database
+      const imageRecord = {
+        name: file.name,
+        url: urlData.publicUrl,
+        path: fileName, 
+        alt_text: file.name.replace(/\.[^/.]+$/, ''),
+        size: file.size,
+        mime_type: file.type,
+        folder: 'general'
+      };
+
+      // 4. Insert into the 'images' table
+      const { data: insertData, error: insertError } = await supabase
+        .from('images')
+        .insert(imageRecord)
+        .select() 
+        .single();
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('blog-images')
-          .upload(fileName, file);
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        toast.error(`Database error for ${file.name}`);
+        continue;
+      }
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          toast.error(`Failed to upload ${file.name}`);
-          continue;
-        }
-
-        // 1. Construct only the data the DB needs from you
-// 1. This is the variable name you used in your file
-const imageRecord = {
-  name: file.name,
-  url: urlData.publicUrl,
-  path: fileName, // ADD THIS LINE: It fixes the PGRST204 error
-  alt_text: file.name.replace(/\.[^/.]+$/, ''),
-  size: file.size,
-  mime_type: file.type,
-  folder: 'general'
-};
-
-// 2. This part sends the data to your database
-const { data: insertData, error: insertError } = await supabase
-  .from('images')
-  .insert(imageRecord)
-  .select() // ADD THIS: Tells Supabase to send back the ID and Created_At
-  .single();
-        
-if (insertError) {
-  console.error('Insert error:', insertError);
-  toast.error(`Database error for ${file.name}`);
-  continue;
-}
-
-// 3. Now insertData contains the id and created_at
-if (insertData) {
-  uploadedImages.push(insertData);
-}
-
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          continue;
-        }
-
+      if (insertData) {
         uploadedImages.push(insertData);
       }
-
-      if (uploadedImages.length > 0) {
-        setImages([...uploadedImages, ...images]);
-        toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
-      }
-    } catch (err) {
-      console.error('Error uploading:', err);
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
-  };
+
+    if (uploadedImages.length > 0) {
+      setImages(prev => [...uploadedImages, ...prev]);
+      toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
+    }
+  } catch (err) {
+    console.error('Error uploading:', err);
+    toast.error('Upload failed');
+  } finally {
+    setUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+};
 
   const handleCopyUrl = async (url: string, id: string) => {
     await navigator.clipboard.writeText(url);
